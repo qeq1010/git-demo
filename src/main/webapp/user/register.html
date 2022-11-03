@@ -1,0 +1,208 @@
+<!--
+  ~ Copyright (c) 2022. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+  ~ Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
+  ~ Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
+  ~ Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
+  ~ Vestibulum commodo. Ut rhoncus gravida arcu.
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册</title>
+</head>
+<style>
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        background-image: url("../images/cool-background.png");
+        position: fixed;
+    }
+
+    #app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /*注册文字居中*/
+    .clearfix {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .text {
+        font-size: 14px;
+    }
+
+    .item {
+        margin-bottom: 18px;
+    }
+
+    .clearfix:before,
+    .clearfix:after {
+        display: table;
+        content: "";
+    }
+
+    .clearfix:after {
+        clear: both
+    }
+
+    .box-card {
+        width: 480px;
+    }
+
+    /*按钮居中*/
+    #sss {
+        text-align: center;
+    }
+
+    /*超链接文字*/
+    .links {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .links a {
+        font-size: 12px;
+    }
+
+    .abb {
+        display: flex;
+        justify-content: center;
+    }
+</style>
+
+<body>
+<div id="app">
+    <el-card class="box-card">
+        <div slot="header" class="clearfix">
+            <span>用户注册</span>
+        </div>
+        <div>
+            <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="auto"
+                     class="demo-ruleForm">
+
+                <el-form-item label="账号" prop="username">
+                    <el-input prefix-icon="el-icon-user" v-model="ruleForm.username"></el-input>
+                </el-form-item>
+
+                <el-form-item label="密码" prop="password">
+                    <el-input prefix-icon="el-icon-lock" type="password" v-model="ruleForm.password"
+                              autocomplete="off">
+                    </el-input>
+                </el-form-item>
+
+                <el-form-item label="验证码" prop="vercode">
+                    <el-col :span="9">
+                        <el-input prefix-icon="el-icon-key" v-model="ruleForm.vercode"></el-input>
+
+                    </el-col>
+                    <div class="abb">
+                        <el-tooltip class="item" effect="dark" content="看不清？点击图片换一张" placement="right">
+                        <el-image id="checkCodeImg" :src="url" @click="imgs"></el-image>
+                        </el-tooltip>
+                    </div>
+                </el-form-item>
+                <el-form-item id="sss">
+                    <el-button type="primary" @click="submitForm('ruleForm')">注册</el-button>
+                    <el-button @click="resetForm('ruleForm')">重置</el-button>
+                </el-form-item>
+            </el-form>
+            <div class="links">
+                <a href="login.html" id="link_login">去登录</a>
+            </div>
+        </div>
+    </el-card>
+</div>
+<!--导入vue-->
+<script src="../js/vue.js"></script>
+<!--导入axios-->
+<script src="../js/axios.js"></script>
+<!--导入element ui-->
+<script src="../element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="../element-ui/lib/theme-chalk/index.css" />
+<script>
+    new Vue({
+        el: "#app",
+        data() {
+            return {
+                url: '/huadian-demo/checkCodeServlet',
+                ruleForm: {
+                    username: '',
+                    password: '',
+                    vercode: '',
+                },
+                rules: {
+                    username: [
+                        { required: true, message: '请输入账号', trigger: 'blur' },
+                        { min: 6, max: 12, message: '长度在 6 到 12个字符', trigger: 'blur' }
+                    ],
+                    password: [
+                        { required: true, message: '请输入密码', trigger: 'blur' },
+                        { min: 6, max: 12, message: '长度在 6 到 12个字符', trigger: 'blur' }
+                    ],
+                    vercode: [
+                        { required: true, message: '请输入验证码', trigger: 'blur' },
+                        { min: 4, max: 4, message: '长度在 4个字符', trigger: 'blur' }
+                    ]
+                }
+            };
+        },
+        methods: {
+
+            imgs() {
+                this.url = "/huadian-demo/checkCodeServlet?" + new Date().getMilliseconds()
+            },
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        axios({
+                            method: "post",
+                            url: "http://localhost:8080/huadian-demo/a/add",
+                            data: this.ruleForm,
+                        }).then(resp=>{
+                            if (resp.data == "success") {
+
+                                this.$message({
+                                    message: '注册成功,请登录',
+                                    type: 'success'
+                                });
+
+                            }else if (resp.data == "errors"){
+                                // 弹出消息提示
+
+                                this.$message.error('注册失败，验证码错误');
+                            }else {
+
+                                this.$message.error('注册失败，账号已存在');
+                            }
+                        });
+
+
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+            },
+            resetForm(formName) {
+                this.$refs[formName].resetFields();
+            }
+        }
+    });
+</script>
+</body>
+
+</html>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.houtai.mapper.SalaryMapper">
+    <update id="update">
+        update u_salary
+        <set>
+            <if test="name!=null and name!=''">
+                name = #{name},
+            </if>
+            <if test="basePay!=null and basePay!=''">
+                basePay = #{basePay},
+            </if>
+            <if test="meritPay!=null and meritPay!=''">
+                meritPay = #{meritPay},
+            </if>
+            <if test="bonus!=null and bonus!=''">
+                bonus = #{bonus},
+            </if>
+            <if test="totalWages!=null and totalWages!=''">
+                totalWages = #{totalWages},
+            </if>
+        </set>
+        where id=#{id};
+    </update>
+
+
+    <delete id="deleteByIds">
+        delete from u_salary where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <select id="selectByPageAndCondition" resultType="com.houtai.pojo.Salary">
+        select *
+        from u_salary
+        <where>
+            <if test="salary.name!= null and salary.name !=''">
+                and name like #{salary.name}
+            </if>
+        </where>
+
+        limit #{begin},#{size}
+    </select>
+
+
+
+
+
+    <select id="selectTotalCountByCondition" resultType="java.lang.Integer">
+        select count(*)
+        from u_salary
+        <where>
+            <if test="name != null and name != '' ">
+                and name like #{name}
+            </if>
+        </where>
+
+    </select>
+
+
+</mapper>

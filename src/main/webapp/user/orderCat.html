@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+</head>
+<style>
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        padding: 15px;
+        background-color: #f2f3f5;
+    }
+
+    .el-table .warning-row {
+        background: oldlace;
+    }
+
+    .el-table .success-row {
+        background: #f0f9eb;
+    }
+
+    #ass {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 1000;
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<body>
+    <div id="app">
+        <!--表格-->
+        <template>
+            <el-table :data="tableData" style="width: 100%" @selection-change="handleSelectionChange">
+                <el-table-column type="selection" width="55"></el-table-column>
+                <el-table-column type="index" width="50"></el-table-column>
+
+                <!-- <el-table-column align="center" label="图片" prop="image">
+                    <template align="center" slot-scope="scope">
+                        <el-image style="width: 60px; height: 60px" :src="scope.row.url"></el-image>
+                    </template>
+                </el-table-column> -->
+
+                <el-table-column prop="fname" label="花名" align="center">
+                </el-table-column>
+
+                <el-table-column prop="price" align="center" label="价格">
+                </el-table-column>
+
+                <el-table-column align="center" label="数量" prop="num">
+                    <template align="center" slot-scope="scope">
+                        <el-input-number size="small" v-model="scope.row.num" :min="1" v-on:change="calTotalPrice()">
+                        </el-input-number>
+                    </template>
+                </el-table-column>
+                <el-table-column align="center" label="合计">
+                    <el-row slot-scope="scope">
+                        {{ (scope.row.price * scope.row.num).toFixed(2)}}
+                    </el-row>
+                </el-table-column>
+
+                <el-table-column align="center" label="操作">
+                    <template slot-scope="scope">
+                        <el-button type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </template>
+        <!---->
+        <el-row id="ass">
+            <el-button type="danger" plain @click="deleteByIds">批量删除</el-button>
+            <el-row>
+                一共{{cartTotalCount}}件
+                <el-row>合计:{{cartTotalPrice}}
+                </el-row>
+                <el-button type="primary" plains @click="add">结算
+                </el-button>
+            </el-row>
+        </el-row>
+
+    </div>
+
+    <script src="../js/vue.js"></script>
+    <script src="../element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../element-ui/lib/theme-chalk/index.css" />
+    <script src="../js/axios.js"></script>
+
+    <script>
+        new Vue({
+            el: "#app",
+
+            mounted() {
+                //当页面加载完成后，发送异步请求，获取数据
+
+                this.selectAll();//自己封装的方法
+            },
+
+            methods: {
+
+                moo(){
+
+                    this.brand.orderId=new Date();
+                    //获取当前时间
+                },
+                // 计算总价和总数量
+
+                calTotalPrice() {
+                    let _this = this;
+                    _this.cartTotalPrice = 0;
+                    _this.cartTotalCount = 0;
+                    // 如果有选中项
+                    if (_this.multipleSelection.length > 0) {
+                        _this.multipleSelection.forEach((item) => {
+                            _this.cartTotalPrice += item.num * item.price;//总价
+                            _this.cartTotalCount += item.num;
+                            cartTotalPrice = _this.calTotalPrice
+                        });
+                    }
+                },
+
+                selectAll() {
+
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/huadian-demo/orderCat/selectOrderCat",
+                        data: this.brand,
+                    }).then(resp => {
+                        //设置表格数据
+                        this.tableData = resp.data; // {rows:[]}
+                    })
+
+                },
+
+
+                 /*async add(){
+                    await this.method1();
+                    await this.method2();
+                     // await this.method3();
+                     // this.selectAll();
+                },*/
+                //嵌套循环发送请求
+                add() {
+                    //先订单详情表添加数据
+                    //1. 创建数组 [1,2,3]装入选中数据, 从 this.multipleSelection 获取即可
+                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                        let selectionElement = this.multipleSelection[i];
+                        this.order[i] = selectionElement;
+                    }
+                    var _this=this;
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/huadian-demo/orderCat/addOrderInfo",
+                        data:_this.order,
+                    }).then(resp => {
+
+                        if (resp.data == "success") {
+
+                            // 成功后发送第二个请求
+                            axios({
+                                method: "post",
+                                url: "http://localhost:8080/huadian-demo/orderCat/addOrder",
+                                data: {
+                                    cartTotalCount: _this.cartTotalCount,
+                                    cartTotalPrice: _this.cartTotalPrice,
+                                }
+                            }).then(resp => {
+
+                                if (resp.data == "success") {
+
+                                    // 成功后发送第三个请求
+                                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                                        let selectionElement = this.multipleSelection[i];
+                                        this.selectedIds[i] = selectionElement.id;
+                                    }
+                                    axios({
+                                        method: "post",
+                                        url: "http://localhost:8080/huadian-demo/orderCat/deleteByIds",
+                                        data:_this.selectedIds,
+                                    }).then(resp => {
+                                        if (resp.data == "success") {
+                                            // 弹出消息提示
+                                            this.$message({
+                                                message: "结算成功",
+                                                type: "success",
+
+                                            });
+                                            this.selectAll();
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                },
+
+
+                // 复选框选中后执行的方法
+                handleSelectionChange(val) {
+
+
+                    this.multipleSelection = val;
+
+
+                    this.calTotalPrice();
+
+                    console.log(this.multipleSelection)
+                    // console.log(this.multipleSelection.price)
+                    // console.log(this.brand)
+                },
+
+                //根据id删除
+                handleDelete(row) {
+                    //要删除的对象的id
+                    this.brand.id = row.id;
+
+                    //弹出确认删除的提示框
+                    this.$confirm('此操作将删除该数据, 是否继续?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        //用户点击确认按钮
+                        //发送ajax请求
+                        axios({
+                            method: "get",
+                            url: "http://localhost:8080/huadian-demo/orderCat/deleteOrderCatById?id=" + this.brand.id
+
+                        }).then(resp => {
+                            if (resp.data == "deleteSuccess") {
+                                //表示删除成功
+
+                                //刷新页面,重新查询数据
+                                this.selectAll();
+
+                                /*//刷新页面
+                                location.reload();*/
+
+                                //弹出消息提示
+                                this.$message({
+                                    message: '恭喜你，删除成功!',
+                                    type: 'success'
+                                });
+                            }
+                        })
+
+                    }).catch(() => {
+                        //用户点击取消按钮
+                        this.$message({
+                            type: 'info',
+                            message: '已取消删除'
+                        });
+                    })
+
+                },
+
+
+                // 批量删除
+                deleteByIds() {
+
+                    // 弹出确认提示框
+                    this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+
+                        //用户点击确认按钮
+                        //1. 创建id数组 [1,2,3], 从 this.multipleSelection 获取即可
+                        for (let i = 0; i < this.multipleSelection.length; i++) {
+                            let selectionElement = this.multipleSelection[i];
+                            this.selectedIds[i] = selectionElement.id;
+                        }
+                        // 发送ajax请求，添加数据
+                        var _this = this;
+
+                        axios({
+                            method: "post",
+                            url: "http://localhost:8080/huadian-demo/orderCat/deleteByIds",
+                            data: _this.selectedIds,
+                        }).then(function (resp) {
+                            if (resp.data == "success") {
+                                //删除成功
+
+                                // 重新查询数据
+                                _this.selectAll();
+                                // 弹出消息提示
+
+                                _this.$message({
+                                    message: "恭喜你，删除成功",
+                                    type: "success",
+                                });
+                            }
+                        });
+
+                    }).catch(() => {
+
+                        //用户点击取消按钮
+                        this.$message({
+                            type: 'info',
+                            message: '已取消删除'
+                        });
+                    });
+
+
+                }
+            },
+
+            data() {
+                return {
+
+                    order:[],
+                    // 购物车总数
+                    cartTotalCount: 0,
+                    // 购物车总价格
+                    cartTotalPrice: 0.0,
+
+                    // 品牌模型数据
+                    brand: {
+                        fname: "",
+                        id: "",
+                        price: "",
+                        num: "",
+                        orderId:""
+                    },
+                    // 被选中的id数组
+                    selectedIds: [],
+                    // 复选框选中数据集合
+                    multipleSelection: [],
+                    // 表格数据
+                    tableData: [
+                        {
+                            fname: "华为科技有限公司",
+                            price: "100",
+                            num: 1,
+                            sumPrice: "100",
+                        },
+                        {
+                            fname: "华为科技有限公司",
+                            price: "100",
+                            num: 1,
+                            sumPrice: "100",
+                        },
+                        {
+                            fname: "华为科技有限公司",
+                            price: "100",
+                            sumPrice: "100",
+                            num: 1,
+                        },
+                        {
+                            fname: "华为科技有限公司",
+                            price: "100",
+                            sumPrice: "100",
+                            num: 1,
+                        },
+                    ],
+                };
+            },
+        });
+    </script>
+</body>
+
+</html>

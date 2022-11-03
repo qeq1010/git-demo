@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.houtai.mapper.InventoryMapper">
+    <update id="update">
+        update o_repertory
+        <set>
+            <if test="fname!=null and fname!=''">
+                fname = #{fname},
+            </if>
+            <if test="inventory!=null ">
+                inventory = #{inventory},
+            </if>
+        </set>
+        where id=#{id};
+    </update>
+
+
+    <delete id="deleteByIds">
+        delete from o_repertory where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <select id="selectByPageAndCondition" resultType="com.houtai.pojo.Inventory">
+        select *
+        from o_repertory
+        <where>
+            <if test="brand.fname!= null and brand.fname !=''">
+                and fname like #{brand.fname}
+            </if>
+        </where>
+        limit #{begin},#{size}
+    </select>
+
+
+    <select id="selectTotalCountByCondition" resultType="java.lang.Integer">
+        select count(*)
+        from o_repertory
+        <where>
+            <if test="fname != null and fname != '' ">
+                and fname like #{fname}
+            </if>
+        </where>
+
+    </select>
+
+
+</mapper>

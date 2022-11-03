@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>首页</title>
+</head>
+<link rel="stylesheet" href="css/home.css"/>
+<body>
+<div id="app">
+    <el-calendar>
+        <!-- 这里使用的是 2.5 slot 语法，对于新项目请使用 2.6 slot 语法-->
+        <template slot="dateCell" slot-scope="{date, data}">
+            <p :class="data.isSelected ? 'is-selected' : ''">
+                {{ data.day.split('-').slice(1).join('-') }} {{ data.isSelected ?
+                '✔️' : ''}}
+            </p>
+        </template>
+    </el-calendar>
+</div>
+<script src="js/vue.js"></script>
+<script src="element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css"/>
+<script>
+    new Vue({
+        el: "#app",
+        data() {
+            return {
+                value: new Date(),
+            };
+        },
+    });
+</script>
+</body>
+</html>

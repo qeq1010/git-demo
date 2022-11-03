@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Title</title>
+</head>
+<style>
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        padding: 15px;
+        background-color: #f2f3f5;
+    }
+
+    .el-table .warning-row {
+        background: oldlace;
+    }
+
+    .el-table .success-row {
+        background: #f0f9eb;
+    }
+</style>
+<body>
+<div id="app">
+    <!--搜索表单-->
+    <el-form :inline="true" :model="inventory" class="demo-form-inline">
+
+        <el-form-item label="品牌名称">
+            <el-input v-model="inventory.fname" placeholder="品牌名称"></el-input>
+        </el-form-item>
+
+        <el-form-item>
+            <el-button type="primary" @click="onSubmit">查询</el-button>
+        </el-form-item>
+    </el-form>
+
+    <!--按钮-->
+
+    <el-row>
+        <el-button type="danger" plain @click="deleteByIds">批量删除</el-button>
+        <el-button type="primary" plain @click="dialogVisible = true"
+        >新增
+        </el-button
+        >
+    </el-row>
+    <!--添加数据对话框表单-->
+    <el-dialog title="添加库存" :visible.sync="dialogVisible" width="30%">
+        <el-form ref="form" :model="inventory" label-width="80px">
+
+            <el-form-item label="品牌名称">
+                <el-input v-model="inventory.fname"></el-input>
+            </el-form-item>
+
+            <el-form-item label="库存">
+                <el-input v-model="inventory.inventory"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button type="primary" @click="addInventory">提交</el-button>
+                <el-button @click="dialogVisible = false">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+
+    <!--修改数据对话框-->
+    <el-dialog
+            title="修改库存"
+            :visible.sync="dialogVisible1"
+            width="30%"
+    >
+        <template slot-scope="scope">
+            <!-- 点击修改,弹出的表单 -->
+            <el-form ref="form" :model="updateInventory" label-width="80px">
+
+                <el-form-item label="品牌名称">
+                    <el-input v-model="updateInventory.fname"></el-input>
+                </el-form-item>
+                <el-form-item label="库存">
+                    <el-input v-model="updateInventory.inventory"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary"  @click="UpdateInventory">完成修改</el-button>
+                    <el-button  @click="cancelupdate" >取消修改</el-button>
+                </el-form-item>
+            </el-form>
+
+        </template>
+
+    </el-dialog>
+
+    <!--表格-->
+    <template>
+        <el-table
+                :data="tableData"
+                style="width: 100%"
+                @selection-change="handleSelectionChange"
+        >
+            <el-table-column type="selection" width="55"></el-table-column>
+            <el-table-column type="index" width="50"></el-table-column>
+
+            <el-table-column prop="fname" label="品牌名称" align="center">
+            </el-table-column>
+            <el-table-column prop="inventory" label="库存" align="center">
+            </el-table-column>
+
+
+            <el-table-column
+                    align="center"
+                    label="操作">
+
+                <template slot-scope="scope">
+                    <el-button type="primary"  @click="handleUpdate(scope.row)">修改</el-button>
+                    <el-button type="danger"  @click="handleDelete(scope.row)">删除</el-button>
+                </template>
+
+            </el-table-column>
+        </el-table>
+    </template>
+
+    <!--分页工具条-->
+    <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-sizes="[5, 10, 15, 20]"
+            :page-size="5"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalCount"
+    >
+    </el-pagination>
+</div>
+
+<script src="js/vue.js"></script>
+<script src="element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css"/>
+<script src="js/axios.js"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+
+        mounted() {
+            //当页面加载完成后，发送异步请求，获取数据
+
+            this.selectAll();//自己封装的方法
+        },
+
+        methods: {
+
+            selectAll() {
+
+/*                var _this = this;
+                axios({
+                    method: "get",
+                    url: "http://localhost:8080/huadian-demo/inventory/selectAll"
+                }).then(function (resp) {
+                    _this.tableData = resp.data;
+                })
+                */
+                // 查询分页数据
+/*                                    var _this = this;
+
+                                    axios({
+                                        method:"post",
+                                        url:"http://localhost:8080/huadian-demo/inventory/selectByPageAndCoundition?currentPage="+_this.currentPage+"&pageSize="+_this.pageSize,
+                                        data:this.inventory
+                                    }).then(function (resp) {
+
+                                        //设置表格数据
+                                        _this.tableData = resp.data.rows; // {rows:[],totalCount:100}
+
+                                        //设置总记录数
+                                        _this.totalCount = resp.data.totalCount;
+                                    })*/
+
+                axios({
+                    method:"post",
+                    url:"http://localhost:8080/huadian-demo/inventory/selectByPageAndCoundition?currentPage="+this.currentPage+"&pageSize="+this.pageSize,
+                    data:this.inventory
+                }).then(resp=>{
+                    //设置表格数据
+                    this.tableData = resp.data.rows; // {rows:[],totalCount:100}
+
+                    //设置总记录数
+                    this.totalCount = resp.data.totalCount;
+                })
+            },
+
+            // 复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+
+                // console.log(this.multipleSelection)
+            },
+            // 查询方法
+            onSubmit() {
+                //console.log(this.brand);
+                this.selectAll();
+            },
+            // 添加数据
+            addInventory() {
+                //console.log(this.brand);
+                var _this = this;
+
+                // 发送ajax请求，添加数据
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/huadian-demo/inventory/add",
+                    data: _this.inventory,
+                }).then(function (resp) {
+                    if (resp.data == "success") {
+                        //添加成功
+                        //关闭窗口
+                        _this.dialogVisible = false;
+                        // 重新查询数据
+                        _this.selectAll();
+                        // 弹出消息提示
+                        _this.$message({
+                            message: "恭喜你，添加成功",
+                            type: "success",
+                        });
+                    }
+                });
+            },
+            //修改数据
+            UpdateInventory(){
+
+                //发送ajax请求,修改数据
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/huadian-demo/inventory/update",
+                    data:this.updateInventory    //当前行的brand对象
+                }).then(resp=>{
+                    if(resp.data=="updateSuccess"){
+                        //表示修改成功
+                        //关闭窗口
+                        this.dialogVisible1=false;
+                        //刷新页面,重新查询数据
+                        this.selectAll();
+                        //弹出消息提示
+                        this.$message({
+                            message: '恭喜你，修改成功!',
+                            type: 'success'
+                        });
+
+                    }
+                })
+            },
+            //修改该行数据
+            handleUpdate(row) {
+                //将表格该行的数据row赋值给要修改的updateBrand数据模型
+                //JSON.parse(JSON.stringify(row))是使用深拷贝的方式,将双向绑定的一些不好的影响给解除
+                //比如说,这样用了之后,你修改双向绑定的数据,如果没有完成修改(发起请求),页面显示内容是不会实时变的,只有完成修改后,页面才会改变相应的数据
+                this.updateInventory=JSON.parse(JSON.stringify(row));
+                // console.log(this.updateBrand);
+                //打开修改对话框
+                this.dialogVisible1=true;
+            },
+
+            //取消修改,刷新页面
+            cancelupdate(){
+                this.dialogVisible1 = false;
+                //刷新页面
+                this.selectAll();
+
+            },
+            //根据id删除
+            handleDelete(row) {
+                //要删除的对象的id
+                this.inventory.id=row.id;
+                // console.log(this.brand.id);
+
+                //弹出确认删除的提示框
+                this.$confirm('此操作将删除该数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(()=>{
+                    //用户点击确认按钮
+                    //发送ajax请求
+                    axios({
+                        method:"get",
+                        url:"http://localhost:8080/huadian-demo/inventory/deleteInventoryById?id="+this.inventory.id
+
+                    }).then(resp=>{
+                        if(resp.data=="deleteSuccess"){
+                            //表示删除成功
+
+                            /*//刷新页面
+                            location.reload();*/
+
+                            //刷新页面,重新查询数据
+                            this.selectAll();
+
+                            //弹出消息提示
+                            this.$message({
+                                message: '恭喜你，删除成功!',
+                                type: 'success'
+                            });
+                        }
+                    })
+
+                }).catch(()=>{
+                    //用户点击取消按钮
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                })
+
+            },
+            //分页
+            handleSizeChange(val) {
+                //console.log(`每页 ${val} 条`);
+
+                // 重新设置每页显示的条数
+                this.pageSize = val;
+                this.selectAll();
+            },
+            handleCurrentChange(val) {
+
+                //console.log(`当前页: ${val}`);
+                // 重新设置当前页码
+                this.currentPage = val;
+                this.selectAll();
+            },
+
+
+            // 批量删除
+            deleteByIds() {
+
+
+                // 弹出确认提示框
+                this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+
+                    //用户点击确认按钮
+                    //1. 创建id数组 [1,2,3], 从 this.multipleSelection 获取即可
+                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                        let selectionElement = this.multipleSelection[i];
+                        this.selectedIds[i] = selectionElement.id;
+                    }
+
+
+                    //1. 创建id数组 [1,2,3], 从 this.multipleSelection 获取即可
+
+                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                        let selectionElement = this.multipleSelection[i];
+                        this.selectedIds[i] = selectionElement.id;
+                    }
+
+                    // 发送ajax请求，添加数据
+                    var _this = this;
+
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/huadian-demo/inventory/deleteByIds",
+                        data: _this.selectedIds,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            //删除成功
+
+                            // 重新查询数据
+                            _this.selectAll();
+                            // 弹出消息提示
+
+                            _this.$message({
+                                message: "恭喜你，删除成功",
+                                type: "success",
+                            });
+                        }
+                    });
+
+                }).catch(() => {
+
+                    //用户点击取消按钮
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+
+
+            }
+        },
+
+        data() {
+            return {
+                // 每页显示的条数
+                pageSize: 5,
+
+                // 总记录数
+                totalCount: 100,
+
+                // 当前页码
+                currentPage: 1,
+
+                // 添加数据对话框是否展示的标记
+                dialogVisible: false,
+
+                //添加数据的对话框是否展示的标记
+                dialogVisible1:false,
+
+                //要修改的品牌模型数据
+                updateInventory: {
+                    fname:"",
+                    id:"",
+                    inventory:"",
+                },
+
+                // 品牌模型数据
+                inventory: {
+                    fname: "",
+                    id: "",
+                    inventory: "",
+                },
+                // 被选中的id数组
+                selectedIds: [],
+                // 复选框选中数据集合
+                multipleSelection: [],
+                // 表格数据
+                tableData: [
+                    {
+                        fname: "华为",
+                        inventory: "华为科技有限公司",
+                    },
+                    {
+                        fname: "华为",
+                        inventory: "华为科技有限公司",
+                    },
+                    {
+                        fname: "华为",
+                        inventory: "华为科技有限公司",
+                    },
+                    {
+                        fname: "华为",
+                        inventory: "华为科技有限公司",
+                    },
+                ],
+            };
+        },
+    });
+</script>
+</body>
+</html>
+

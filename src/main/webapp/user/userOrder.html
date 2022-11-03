@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+</head>
+<style>
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        padding: 15px;
+        background-color: #f2f3f5;
+    }
+
+    .el-table .warning-row {
+        background: oldlace;
+    }
+
+    .el-table .success-row {
+        background: #f0f9eb;
+    }
+    .demo-form-inline {
+        display: flex;
+        align-items: center;
+    }
+
+    .add {
+        margin-right: 15px;
+    }
+</style>
+
+<body>
+<div id="app">
+    <!--搜索表单-->
+    <el-form :inline="true" :model="brand" class="demo-form-inline">
+
+        <!--按钮-->
+        <el-row class="add">
+            <el-button type="danger" plain @click="deleteByIds">批量删除</el-button>
+        </el-row>
+
+        <el-form-item label="当前状态">
+            <el-select v-model="brand.status" placeholder="当前状态">
+                <el-option label="未发货" value="0"></el-option>
+                <el-option label="已发货" value="1"></el-option>
+            </el-select>
+        </el-form-item>
+
+        <el-form-item label="订单编号">
+            <el-input v-model="brand.userName" placeholder="订单编号"></el-input>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" @click="onSubmit">查询</el-button>
+        </el-form-item>
+    </el-form>
+
+
+
+
+    <!--表格-->
+    <template>
+        <el-dialog title="订单详情" :visible.sync="dialogTableVisible">
+            <el-table :data="gridData">
+                <el-table-column property="fname" label="日期" width="150"></el-table-column>
+                <el-table-column property="num" label="姓名" width="200"></el-table-column>
+                <el-table-column property="price" label="地址"></el-table-column>
+            </el-table>
+        </el-dialog>
+
+        <el-table :data="tableData" height="620px" style="width: 100%" @selection-change="handleSelectionChange">
+            <el-table-column type="selection" width="55"></el-table-column>
+            <el-table-column type="index" width="50"></el-table-column>
+
+            <el-table-column prop="orderId" label="订单编号" align="center">
+            </el-table-column>
+            <el-table-column prop="cartTotalCount" label="数量" align="center">
+            </el-table-column>
+            <el-table-column prop="cartTotalPrice" label="价格" align="center">
+            </el-table-column>
+            <el-table-column prop="statusStr" label="当前状态" align="center">
+            </el-table-column>
+
+            <el-table-column align="center" label="操作">
+                <template slot-scope="scope">
+                    <el-button type="primary" @click="open(scope.row)">订单详情</el-button>
+                    <el-button type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                </template>
+            </el-table-column>
+
+        </el-table>
+    </template>
+
+</div>
+
+<script src="../js/vue.js"></script>
+<script src="../element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="../element-ui/lib/theme-chalk/index.css" />
+<script src="../js/axios.js"></script>
+
+<script>
+    const vm=new Vue({
+        el: "#app",
+
+        mounted() {
+            //当页面加载完成后，发送异步请求，获取数据
+
+            this.selectAll();//自己封装的方法
+        },
+
+        methods: {
+
+            selectAll() {
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/huadian-demo/orderList/selectAll",
+                    data: this.brand,
+                }).then(resp => {
+                    //设置表格数据
+                    this.tableData = resp.data; // {rows:[],totalCount:100}
+                })
+
+            },
+            open(row) {
+                this.brand.id = row.id;
+                axios({
+                    method: "get",
+                    url: "http://localhost:8080/huadian-demo/orderList/selectOrderInfo?id="+this.brand.id,
+                }).then(resp => {
+                    if (resp.data == "success") {
+                        this.gridData = resp.data;
+                    }
+                })
+                    this.dialogTableVisible=true;
+            },
+
+            // 复选框选中后执行的方法
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+
+                // console.log(this.multipleSelection)
+            },
+            // 查询方法
+            onSubmit() {
+                //console.log(this.brand);
+                this.selectAll();
+            },
+            // 添加数据
+            addBrand() {
+
+                // 发送ajax请求，添加数据
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/huadian-demo/brand/add",
+                    data: this.brand,
+                }).then(resp => {
+
+                    if (resp.data == "success") {
+                        //添加成功
+                        //关闭窗口
+                        this.dialogVisible = false;
+                        // 重新查询数据
+                        this.selectAll();
+                        // 弹出消息提示
+                        this.$message({
+                            message: "恭喜你，添加成功",
+                            type: "success",
+                        });
+                    }
+                });
+
+
+            },
+            //修改数据
+            UpdateBrand() {
+
+                //发送ajax请求,修改数据
+                axios({
+                    method: "post",
+                    url: "http://localhost:8080/huadian-demo/brand/update",
+                    data: this.updateBrand    //当前行的brand对象
+                }).then(resp => {
+                    if (resp.data == "updateSuccess") {
+                        //表示修改成功
+                        //关闭窗口
+                        this.dialogVisible1 = false;
+                        //刷新页面,重新查询数据
+                        this.selectAll();
+                        //弹出消息提示
+                        this.$message({
+                            message: '恭喜你，修改成功!',
+                            type: 'success'
+                        });
+
+                    }
+                })
+            },
+            //修改该行数据
+            handleUpdate(row) {
+                //将表格该行的数据row赋值给要修改的updateBrand数据模型
+                //JSON.parse(JSON.stringify(row))是使用深拷贝的方式,将双向绑定的一些不好的影响给解除
+                //比如说,这样用了之后,你修改双向绑定的数据,如果没有完成修改(发起请求),页面显示内容是不会实时变的,只有完成修改后,页面才会改变相应的数据
+                this.updateBrand = JSON.parse(JSON.stringify(row));
+                // console.log(this.updateBrand);
+                //打开修改对话框
+                this.dialogVisible1 = true;
+            },
+
+            //取消修改,刷新页面
+            cancelupdate() {
+                this.dialogVisible1 = false;
+                //刷新页面
+                this.selectAll();
+
+            },
+            //根据id删除
+            handleDelete(row) {
+                //要删除的对象的id
+                this.brand.id = row.id;
+                // console.log(this.brand.id);
+
+                //弹出确认删除的提示框
+                this.$confirm('此操作将删除该数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    //用户点击确认按钮
+                    //发送ajax请求
+                    axios({
+                        method: "get",
+                        url: "http://localhost:8080/huadian-demo/brand/deleteBrandById?id=" + this.brand.id
+
+                    }).then(resp => {
+                        if (resp.data == "deleteSuccess") {
+                            //表示删除成功
+
+
+
+                            //刷新页面,重新查询数据
+                            this.selectAll();
+
+                            /*//刷新页面
+                            location.reload();*/
+
+                            //弹出消息提示
+                            this.$message({
+                                message: '恭喜你，删除成功!',
+                                type: 'success'
+                            });
+                        }
+                    })
+
+                }).catch(() => {
+                    //用户点击取消按钮
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                })
+
+            },
+
+
+            // 批量删除
+            deleteByIds() {
+
+
+                // 弹出确认提示框
+                this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+
+                    //用户点击确认按钮
+                    //1. 创建id数组 [1,2,3], 从 this.multipleSelection 获取即可
+                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                        let selectionElement = this.multipleSelection[i];
+                        this.selectedIds[i] = selectionElement.id;
+                    }
+
+
+                    //1. 创建id数组 [1,2,3], 从 this.multipleSelection 获取即可
+
+                    for (let i = 0; i < this.multipleSelection.length; i++) {
+                        let selectionElement = this.multipleSelection[i];
+                        this.selectedIds[i] = selectionElement.id;
+                    }
+
+                    // 发送ajax请求，添加数据
+                    var _this = this;
+
+                    axios({
+                        method: "post",
+                        url: "http://localhost:8080/huadian-demo/brand/deleteByIds",
+                        data: _this.selectedIds,
+                    }).then(function (resp) {
+                        if (resp.data == "success") {
+                            //删除成功
+
+                            // 重新查询数据
+                            _this.selectAll();
+                            // 弹出消息提示
+
+                            _this.$message({
+                                message: "恭喜你，删除成功",
+                                type: "success",
+                            });
+                        }
+                    });
+
+                }).catch(() => {
+
+                    //用户点击取消按钮
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+
+
+            }
+        },
+
+        data() {
+            return {
+
+                orders: {
+                    fname: "",
+                    num: 0,
+                    price: 0,
+                },
+
+                gridData: [{
+                    fname: '玫瑰',
+                    num: 22,
+                    price: 5
+                }, {
+                    fname: '玫瑰',
+                    num: 22,
+                    price: 5
+                }, {
+                    fname: '玫瑰',
+                    num: 22,
+                    price: 5
+                }, {
+                    fname: '玫瑰',
+                    num: 22,
+                    price: 5
+                }],
+
+                // 订单数据对话框是否展示的标记
+                dialogTableVisible: false,
+
+
+                // 品牌模型数据
+                brand: {
+                    orderId: "",
+                    cartTotalCount: "",
+                    id: "",
+                    cartTotalCount: "",
+                    status: "",
+                },
+                // 被选中的id数组
+                selectedIds: [],
+                // 复选框选中数据集合
+                multipleSelection: [],
+                // 表格数据
+                tableData: [
+                    {
+                        orderId: "222333444",
+                        cartTotalCount: "夜烛",
+                        cartTotalPrice: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                    {
+                        orderId: "222333444",
+                        fname: "夜烛",
+                        price: "100",
+                        status: "1",
+                    },
+                ],
+            }
+        },
+    });
+</script>
+</body>
+
+</html>

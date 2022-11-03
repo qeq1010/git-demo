@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.houtai.mapper.InfoMapper">
+    <update id="update">
+        update u_info
+        <set>
+            <if test="uname!=null and uname!=''">
+                uname = #{uname},
+            </if>
+            <if test="sex!=null and sex!=''">
+                sex = #{sex},
+            </if>
+            <if test="number!=null ">
+                number = #{number},
+            </if>
+        </set>
+        where id=#{id};
+    </update>
+
+
+    <delete id="deleteByIds">
+        delete from u_info where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <select id="selectByPageAndCondition" resultType="com.houtai.pojo.Info">
+        select *
+        from u_info
+        <where>
+            <if test="info.uname!= null and info.uname !=''">
+                and uname like #{info.uname}
+            </if>
+        </where>
+        limit #{begin},#{size}
+    </select>
+
+    <select id="selectTotalCountByCondition" resultType="java.lang.Integer">
+        select count(*)
+        from u_info
+        <where>
+            <if test="uname != null and uname != '' ">
+                and uname like #{uname}
+            </if>
+        </where>
+
+    </select>
+
+
+
+
+</mapper>

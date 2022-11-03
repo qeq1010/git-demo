@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员首页</title>
+</head>
+<link rel="stylesheet" href="css/admin_index.css" />
+<body>
+    <div id="app">
+        <el-container class="home-container">
+            <!-- 头部 -->
+            <el-header id="aaa">
+                <!-- 头像 -->
+                <!-- <div class="block"><el-avatar :size="50" :src="circleUrl"></el-avatar></div> -->
+                <div id="text-avatar">
+                    <el-image :src="url" style="width: 60px; height: 60px"></el-image>
+                    <span>后台管理系统</span>
+                </div>
+                <el-row v-model="span_username">{{span_username}}</el-row>
+                <el-button type="info" @clicK="logout">退出系统</el-button>
+            </el-header>
+            <!-- 页面主题区域 -->
+            <el-container>
+                <!-- 侧边栏-->
+                <el-aside :width="isCollapse ? '64px' : '200px'">
+                    <div class="toggle-button" @click="toggleCollapse">|||</div>
+                    <el-menu background-color="rgb(238, 229, 229)" unique-opened :collapse="isCollapse"
+                        :collapse-transition="false" default-active="0">
+                        <el-menu-item index="0">
+                            <i class="el-icon-s-home"></i>
+                            <span slot="title">
+                                <el-link href="frist.html" target="fm">首页</el-link>
+                            </span>
+                        </el-menu-item>
+                        <el-submenu index="1">
+                            <template slot="title">
+                                <i class="el-icon-s-promotion"></i>
+                                <span>订单管理</span>
+                            </template>
+                            <el-menu-item index="1-1">
+                                <el-link href="admin_dingdan.html" target="fm">订单列表</el-link>
+                            </el-menu-item>
+                            <el-menu-item index="1-2">
+                                <el-link href="admin_kuchun.html" target="fm">库存管理</el-link>
+                            </el-menu-item>
+                        </el-submenu>
+                        <el-submenu index="2">
+                            <template slot="title">
+                                <i class="el-icon-s-check"></i>
+                                <span>员工管理</span>
+                            </template>
+                            <el-menu-item index="2-1">
+                                <el-link href="admin_aa.html" target="fm">员工列表</el-link>
+                            </el-menu-item>
+                            <el-menu-item index="2-2">
+                                <el-link href="admin_bb.html" target="fm">员工工资</el-link>
+                            </el-menu-item>
+                        </el-submenu>
+                        <el-submenu index="3">
+                            <template slot="title">
+                                <i class="el-icon-lock"></i>
+                                <span>个人中心</span>
+                            </template>
+                            <el-menu-item index="3-1">
+                                <el-link :underline="false" href="admin_pwd.html" target="fm">修改密码</el-link>
+                            </el-menu-item>
+                        </el-submenu>
+                    </el-menu>
+                </el-aside>
+                <!-- 右侧主体区域 -->
+                <el-main id="add">
+                    <div class="lay-body">
+                        <!-- 内容主体区域 -->
+                        <iframe name="fm" src="frist.html" frameborder="0"></iframe>
+                    </div>
+                </el-main>
+            </el-container>
+        </el-container>
+    </div>
+    <!--导入vue-->
+    <script src="js/vue.js"></script>
+    <!--导入axios-->
+    <script src="js/axios.js"></script>
+    <!--导入element ui-->
+    <script src="element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css" />
+    <script>
+        new Vue({
+            el: "#app",
+            mounted() {
+                //当页面加载完成后，发送异步请求，获取数据
+                axios({
+                    method:"get",
+                    url:"http://localhost:8080/huadian-demo/findAdminServlet",
+                }).then(resp=>{
+                    this.span_username='欢迎回来：'+resp.data.username;
+                })
+            },
+
+            methods: {
+                logout() {
+
+                    this.$confirm('是否退出系统?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        axios({
+                            method: "get",
+                            url: "http://localhost:8080/huadian-demo/exitServlet",
+                        }).then(resp => {
+                            if (resp.data == "success") {
+
+                                // 弹出消息提示,并重定向
+                                /*this.$message({
+                                    message: '恭喜你，登录成功',
+                                    type: 'success'
+                                });*/
+                                location.href="admin_login.html";
+                            }
+                        });
+                    }).catch(() => {
+                        this.$message({
+                            type: 'info',
+                            message: '已取消退出'
+                        });
+                    });
+                },
+                //折叠菜单
+                toggleCollapse() {
+                    this.isCollapse = !this.isCollapse
+                },
+
+            },
+            data() {
+                return {
+                    url:'http://localhost:8080/huadian-demo/images/lanhua.png',
+                    span_username:'欢迎回来',
+                    //是否折叠
+                    isCollapse: false
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>
